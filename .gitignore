@@ -39,3 +39,20 @@ build/
 ### OS ###
 .DS_Store
 Thumbs.db
+
+### Flutter / Dart (frontend at repo root) ###
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+pubspec.lock
+
+### FVM ###
+
+# Keep FVM config committed so everyone uses the same Flutter version
+!.fvm/fvm_config.json
+!.fvmrc
+
+# FVM Version Cache
+.fvm/
