@@ -40,6 +40,9 @@ build/
 .DS_Store
 Thumbs.db
 
+### Local notes (not for GitHub) ###
+docs/BACKEND_INTERVIEW_GUIDE.md
+
 ### Flutter / Dart (frontend at repo root) ###
 .dart_tool/
 .flutter-plugins
