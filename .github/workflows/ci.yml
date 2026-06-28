@@ -23,6 +23,10 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      # mvnw may lose +x on Windows checkouts — required on ubuntu-latest
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
       # Step 3: Compile + run unit tests + JaCoCo coverage report
       - name: Build and test
         run: ./mvnw -B verify
