@@ -1,4 +1,5 @@
-// Maps GET /employees response item (inside "content" array)
+import '../../../core/models/page_response.dart';
+
 class Employee {
   const Employee({
     required this.id,
@@ -20,7 +21,7 @@ class Employee {
       lastName: json['lastName'] as String,
       email: json['email'] as String,
       salary: (json['salary'] as num).toDouble(),
-      hireDate: json['hireDate'] as String, // Format: yyyy-MM-dd
+      hireDate: json['hireDate'] as String,
       departmentId: json['departmentId'] as int,
       departmentName: json['departmentName'] as String?,
       createdAt: json['createdAt'] as String?,
@@ -28,7 +29,7 @@ class Employee {
     );
   }
 
-  String get fullName => '$firstName $lastName'; // Convenience for UI display
+  String get fullName => '$firstName $lastName';
 
   final int id;
   final String firstName;
@@ -42,7 +43,6 @@ class Employee {
   final String? updatedAt;
 }
 
-// Body sent to POST /employees and PUT /employees/{id}
 class EmployeeRequest {
   const EmployeeRequest({
     required this.firstName,
@@ -70,36 +70,4 @@ class EmployeeRequest {
   final int departmentId;
 }
 
-// Maps Spring Boot paginated response: { content, totalElements, totalPages, ... }
-class PageResponse<T> {
-  const PageResponse({
-    required this.content,
-    required this.totalElements,
-    required this.totalPages,
-    required this.size,
-    required this.number,
-  });
-
-  factory PageResponse.fromJson(
-    Map<String, dynamic> json,
-    T Function(Map<String, dynamic>) fromJsonT,
-  ) {
-    final content = (json['content'] as List<dynamic>)
-        .map((item) => fromJsonT(item as Map<String, dynamic>))
-        .toList();
-
-    return PageResponse(
-      content: content,
-      totalElements: json['totalElements'] as int,
-      totalPages: json['totalPages'] as int,
-      size: json['size'] as int,
-      number: json['number'] as int, // Current page (0-based)
-    );
-  }
-
-  final List<T> content; // Employees on this page
-  final int totalElements; // Total across all pages
-  final int totalPages;
-  final int size; // Page size
-  final int number; // Current page index
-}
+typedef EmployeePage = PageResponse<Employee>;

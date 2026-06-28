@@ -17,6 +17,8 @@ class AdminShell extends ConsumerWidget {
     _NavItem('/dashboard', Icons.dashboard_outlined, 'Dashboard'),
     _NavItem('/departments', Icons.business_outlined, 'Departments'),
     _NavItem('/employees', Icons.people_outline, 'Employees'),
+    _NavItem('/projects', Icons.folder_outlined, 'Projects'),
+    _NavItem('/tasks', Icons.task_alt_outlined, 'Tasks'),
   ];
 
   @override

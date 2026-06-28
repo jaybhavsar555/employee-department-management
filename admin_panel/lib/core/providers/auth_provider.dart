@@ -21,14 +21,19 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession?>> {
   }
 
   final AuthRepository _repository;
+  int _authGeneration = 0;
 
   /// Called automatically at startup — reads saved tokens from device storage.
   Future<void> _restoreSession() async {
+    final generation = _authGeneration;
     try {
       final session = await _repository.restoreSession();
+      // Ignore stale bootstrap if login/logout ran while storage was still loading.
+      if (generation != _authGeneration) return;
       // session is null if no tokens saved (user must log in)
       state = AsyncValue.data(session);
     } catch (e, st) {
+      if (generation != _authGeneration) return;
       state = AsyncValue.error(e, st);
     }
   }
@@ -36,6 +41,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession?>> {
   /// Called from LoginPage when user taps Sign in.
   /// Returns error message string, or null on success.
   Future<String?> login(String username, String password) async {
+    _authGeneration++;
     state = const AsyncValue.loading(); // Show loading spinner on login button
     try {
       final session = await _repository.login(username, password);
@@ -52,6 +58,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession?>> {
 
   /// Clears tokens from storage and updates state — router sends user to /login.
   Future<void> logout() async {
+    _authGeneration++;
     await _repository.logout();
     state = const AsyncValue.data(null);
   }

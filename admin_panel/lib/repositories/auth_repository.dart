@@ -16,18 +16,28 @@ class AuthRepository {
 
   /// App startup: load tokens from secure storage and rebuild session.
   Future<AuthSession?> restoreSession() async {
+    final session = await _readStoredSession();
+    if (session != null) return session;
+
+    // Storage reads are async; login may finish while bootstrap reads are in flight.
+    final retry = await _readStoredSession();
+    if (retry != null) return retry;
+
+    await _storage.clear();
+    _cachedAccessToken = null;
+    return null;
+  }
+
+  Future<AuthSession?> _readStoredSession() async {
     final accessToken = await _storage.readAccessToken();
     final refreshToken = await _storage.readRefreshToken();
     final username = await _storage.readUsername();
     final role = await _storage.readRole();
 
-    // If any piece is missing, treat as logged out and wipe partial data
     if (accessToken == null ||
         refreshToken == null ||
         username == null ||
         role == null) {
-      await _storage.clear();
-      _cachedAccessToken = null;
       return null;
     }
 

@@ -1,4 +1,3 @@
-// Maps GET /departments response item
 class Department {
   const Department({
     required this.id,
@@ -23,12 +22,11 @@ class Department {
   final int id;
   final String name;
   final String? description;
-  final int employeeCount; // How many employees belong to this department
+  final int employeeCount;
   final String? createdAt;
   final String? updatedAt;
 }
 
-// Body sent to POST /departments and PUT /departments/{id}
 class DepartmentRequest {
   const DepartmentRequest({required this.name, this.description});
 
