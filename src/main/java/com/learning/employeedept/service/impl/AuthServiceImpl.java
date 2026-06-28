@@ -73,13 +73,32 @@ public class AuthServiceImpl implements AuthService {
         return buildAuthResponse(request.getUsername());
     }
 
+    @Override
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        String refreshToken = request.getRefreshToken();
+        if (!jwtService.isRefreshToken(refreshToken)) {
+            throw new UnauthorizedException("Invalid refresh token");
+        }
+
+        String username = jwtService.extractUsername(refreshToken);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        if (!jwtService.isRefreshTokenValid(refreshToken, userDetails)) {
+            throw new UnauthorizedException("Refresh token expired or invalid");
+        }
+
+        log.info("Tokens refreshed for user: {}", username);
+        return buildAuthResponse(username);
+    }
+
     private AuthResponse buildAuthResponse(String username) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         String token = jwtService.generateToken(userDetails);
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
         return AuthResponse.builder()
                 .token(token)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .username(username)
                 .role(role)

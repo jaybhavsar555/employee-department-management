@@ -1,6 +1,7 @@
 package com.learning.employeedept.controller;
 
 import com.learning.employeedept.dto.request.LoginRequest;
+import com.learning.employeedept.dto.request.RefreshTokenRequest;
 import com.learning.employeedept.dto.request.RegisterRequest;
 import com.learning.employeedept.dto.response.AuthResponse;
 import com.learning.employeedept.service.AuthService;
@@ -33,5 +34,11 @@ public class AuthController {
     @Operation(summary = "Login and receive JWT token")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Refresh access token using a refresh token")
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refresh(request));
     }
 }

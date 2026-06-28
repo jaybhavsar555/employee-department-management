@@ -49,8 +49,10 @@ build/
 pubspec.lock
 
 ### FVM ###
-.fvm/flutter_sdk
 
 # Keep FVM config committed so everyone uses the same Flutter version
 !.fvm/fvm_config.json
 !.fvmrc
+
+# FVM Version Cache
+.fvm/
