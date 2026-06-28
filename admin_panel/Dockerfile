@@ -1,4 +1,4 @@
-# Stage 1 — build Flutter web app
+# Use Flutter stable; pubspec SDK is ^3.12.0 to match Docker image
 FROM ghcr.io/cirruslabs/flutter:stable AS build
 
 WORKDIR /app

@@ -7,6 +7,7 @@ import '../../models/department.dart';
 import '../../services/department_service.dart';
 import '../../shared/widgets/common_widgets.dart';
 
+/// CRUD page for departments — GET, POST, PUT, DELETE /departments
 class DepartmentsPage extends ConsumerStatefulWidget {
   const DepartmentsPage({super.key});
 
@@ -25,6 +26,7 @@ class _DepartmentsPageState extends ConsumerState<DepartmentsPage> {
     _load();
   }
 
+  /// Fetches all departments from backend
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -48,6 +50,7 @@ class _DepartmentsPageState extends ConsumerState<DepartmentsPage> {
     }
   }
 
+  /// Opens create/edit dialog — reloads table if user saved
   Future<void> _openForm({Department? department}) async {
     final saved = await showDialog<bool>(
       context: context,
@@ -56,6 +59,7 @@ class _DepartmentsPageState extends ConsumerState<DepartmentsPage> {
     if (saved == true) await _load();
   }
 
+  /// DELETE /departments/{id} — only shown for ROLE_ADMIN
   Future<void> _delete(Department department) async {
     final confirmed = await showConfirmDialog(
       context,
@@ -82,6 +86,7 @@ class _DepartmentsPageState extends ConsumerState<DepartmentsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch auth to show delete button only for admin
     final isAdmin = ref.watch(authStateProvider).valueOrNull?.isAdmin ?? false;
 
     return Scaffold(
@@ -111,7 +116,7 @@ class _DepartmentsPageState extends ConsumerState<DepartmentsPage> {
                           ),
                           const Spacer(),
                           FilledButton.icon(
-                            onPressed: () => _openForm(),
+                            onPressed: () => _openForm(), // Create new
                             icon: const Icon(Icons.add),
                             label: const Text('Add department'),
                           ),
@@ -121,9 +126,7 @@ class _DepartmentsPageState extends ConsumerState<DepartmentsPage> {
                       Expanded(
                         child: Card(
                           child: _departments!.isEmpty
-                              ? const Center(
-                                  child: Text('No departments found.'),
-                                )
+                              ? const Center(child: Text('No departments found.'))
                               : SingleChildScrollView(
                                   child: DataTable(
                                     columns: const [
@@ -148,6 +151,7 @@ class _DepartmentsPageState extends ConsumerState<DepartmentsPage> {
                                                   onPressed: () =>
                                                       _openForm(department: dept),
                                                 ),
+                                                // Delete only visible for admin
                                                 if (isAdmin)
                                                   IconButton(
                                                     tooltip: 'Delete',
@@ -171,6 +175,7 @@ class _DepartmentsPageState extends ConsumerState<DepartmentsPage> {
   }
 }
 
+/// Popup form for create (department=null) or edit (department provided)
 class _DepartmentFormDialog extends ConsumerStatefulWidget {
   const _DepartmentFormDialog({this.department});
 
@@ -190,6 +195,7 @@ class _DepartmentFormDialogState extends ConsumerState<_DepartmentFormDialog> {
   @override
   void initState() {
     super.initState();
+    // Pre-fill fields when editing
     _nameController = TextEditingController(text: widget.department?.name ?? '');
     _descriptionController =
         TextEditingController(text: widget.department?.description ?? '');
@@ -214,12 +220,12 @@ class _DepartmentFormDialogState extends ConsumerState<_DepartmentFormDialog> {
     try {
       final service = ref.read(departmentServiceProvider);
       if (widget.department == null) {
-        await service.create(request);
+        await service.create(request); // POST
       } else {
-        await service.update(widget.department!.id, request);
+        await service.update(widget.department!.id, request); // PUT
       }
       if (!mounted) return;
-      Navigator.pop(context, true);
+      Navigator.pop(context, true); // Tell parent to reload list
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);

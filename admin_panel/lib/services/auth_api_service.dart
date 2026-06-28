@@ -4,10 +4,8 @@ import '../core/constants/app_constants.dart';
 import '../core/network/dio_error_mapper.dart';
 import '../models/auth_response.dart';
 
-/// Low-level HTTP calls for authentication endpoints.
-///
-/// Uses a standalone [Dio] instance without auth interceptors so login
-/// and refresh requests never attach a stale Bearer token.
+/// HTTP calls for /auth/login and /auth/refresh only.
+/// Uses its own Dio — NOT the one with JWT interceptors.
 class AuthApiService {
   AuthApiService({Dio? dio})
       : _dio = dio ??
@@ -22,6 +20,7 @@ class AuthApiService {
 
   final Dio _dio;
 
+  /// POST /auth/login — returns access + refresh tokens
   Future<AuthResponse> login(LoginRequest request) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
@@ -34,6 +33,7 @@ class AuthApiService {
     }
   }
 
+  /// POST /auth/refresh — exchange refresh token for new token pair
   Future<AuthResponse> refresh(RefreshTokenRequest request) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(

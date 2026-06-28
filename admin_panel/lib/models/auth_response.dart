@@ -1,3 +1,4 @@
+// Maps JSON from POST /auth/login and POST /auth/refresh
 class AuthResponse {
   const AuthResponse({
     required this.token,
@@ -7,6 +8,7 @@ class AuthResponse {
     required this.role,
   });
 
+  // Parse backend JSON into Dart object
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
       token: json['token'] as String,
@@ -17,15 +19,16 @@ class AuthResponse {
     );
   }
 
-  final String token;
-  final String refreshToken;
-  final String tokenType;
+  final String token; // Access JWT
+  final String refreshToken; // Refresh JWT
+  final String tokenType; // Always "Bearer"
   final String username;
   final String role;
 
   bool get isAdmin => role == 'ROLE_ADMIN';
 }
 
+// Body sent to POST /auth/login
 class LoginRequest {
   const LoginRequest({required this.username, required this.password});
 
@@ -38,6 +41,7 @@ class LoginRequest {
   final String password;
 }
 
+// Body sent to POST /auth/refresh
 class RefreshTokenRequest {
   const RefreshTokenRequest({required this.refreshToken});
 

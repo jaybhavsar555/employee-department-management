@@ -9,11 +9,13 @@ final employeeServiceProvider = Provider<EmployeeService>((ref) {
   return EmployeeService(ref.watch(dioProvider));
 });
 
+/// Calls backend /employees endpoints with pagination and filters.
 class EmployeeService {
   EmployeeService(this._dio);
 
   final Dio _dio;
 
+  /// GET /employees?page=0&size=10&sort=lastName,asc&departmentId=1&search=john
   Future<PageResponse<Employee>> getAll({
     int page = 0,
     int size = 10,
@@ -38,6 +40,7 @@ class EmployeeService {
     }
   }
 
+  /// POST /employees
   Future<Employee> create(EmployeeRequest request) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
@@ -50,6 +53,7 @@ class EmployeeService {
     }
   }
 
+  /// PUT /employees/{id}
   Future<Employee> update(int id, EmployeeRequest request) async {
     try {
       final response = await _dio.put<Map<String, dynamic>>(
@@ -62,6 +66,7 @@ class EmployeeService {
     }
   }
 
+  /// DELETE /employees/{id} — admin only on backend
   Future<void> delete(int id) async {
     try {
       await _dio.delete<void>('/employees/$id');

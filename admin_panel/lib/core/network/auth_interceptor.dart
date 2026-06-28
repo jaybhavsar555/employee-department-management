@@ -2,7 +2,8 @@ import 'package:dio/dio.dart';
 
 import '../../repositories/auth_repository.dart';
 
-/// Attaches `Authorization: Bearer <access_token>` to every outgoing request.
+/// Dio interceptor — runs BEFORE every HTTP request.
+/// Adds JWT to the Authorization header so backend knows who we are.
 class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._authRepository);
 
@@ -13,10 +14,12 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    // Read access token from repository (memory or secure storage)
     final token = await _authRepository.getAccessToken();
     if (token != null && token.isNotEmpty) {
+      // Same format backend expects: Authorization: Bearer <token>
       options.headers['Authorization'] = 'Bearer $token';
     }
-    handler.next(options);
+    handler.next(options); // Continue sending the request
   }
 }
