@@ -27,11 +27,11 @@ CREATE TYPE task_priority  AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
 -- ---------------------------------------------------------------------------
 CREATE TABLE roles (
     id          BIGSERIAL       PRIMARY KEY,                    -- PK: surrogate key (auto-increment)
-    name        VARCHAR(20)     NOT NULL UNIQUE,                -- UK: ROLE_ADMIN, ROLE_USER
+    name        VARCHAR(20)     NOT NULL UNIQUE,                -- UK: ROLE_ADMIN, ROLE_EMPLOYEE
     created_at  TIMESTAMP       NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMP       NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_roles_name CHECK (name IN ('ROLE_ADMIN', 'ROLE_USER'))
+    CONSTRAINT chk_roles_name CHECK (name IN ('ROLE_ADMIN', 'ROLE_EMPLOYEE'))
 );
 
 -- ---------------------------------------------------------------------------

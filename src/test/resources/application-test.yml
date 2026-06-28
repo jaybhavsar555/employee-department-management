@@ -13,3 +13,4 @@ app:
   jwt:
     secret: test-secret-key-for-unit-tests-only-minimum-256-bits-long-value-here
     expiration-ms: 3600000
+    refresh-expiration-ms: 604800000
