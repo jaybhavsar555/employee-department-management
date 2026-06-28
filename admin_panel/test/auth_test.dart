@@ -10,8 +10,8 @@ void main() {
       expect(session.isAdmin, isTrue);
     });
 
-    test('isAdmin is false for ROLE_USER', () {
-      const session = AuthSession(username: 'john', role: 'ROLE_USER');
+    test('isAdmin is false for ROLE_EMPLOYEE', () {
+      const session = AuthSession(username: 'john', role: 'ROLE_EMPLOYEE');
       expect(session.isAdmin, isFalse);
     });
   });
