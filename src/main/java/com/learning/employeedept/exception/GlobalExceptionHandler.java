@@ -15,6 +15,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
+/**
+ * Centralized exception handling for all REST controllers.
+ * <p>
+ * Why prefer global handling over try/catch in every controller?
+ * <ul>
+ *   <li><b>DRY</b> — one place maps exceptions → HTTP status + JSON body</li>
+ *   <li><b>Consistency</b> — clients always receive {@link ApiErrorResponse}</li>
+ *   <li><b>Separation of concerns</b> — controllers/services throw domain exceptions;
+ *       this class translates them to HTTP</li>
+ *   <li><b>Security</b> — generic 500 message hides internal stack traces from clients</li>
+ * </ul>
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -26,11 +38,25 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
     }
 
-    @ExceptionHandler({BadRequestException.class})
+    @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiErrorResponse> handleBadRequest(BadRequestException ex,
                                                              HttpServletRequest request) {
         log.warn("Bad request: {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ApiErrorResponse> handleValidationException(ValidationException ex,
+                                                                      HttpServletRequest request) {
+        log.warn("Validation error: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ResponseEntity<ApiErrorResponse> handleDuplicateEmail(DuplicateEmailException ex,
+                                                                 HttpServletRequest request) {
+        log.warn("Duplicate email: {}", ex.getMessage());
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
@@ -43,7 +69,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({UnauthorizedException.class, BadCredentialsException.class})
     public ResponseEntity<ApiErrorResponse> handleUnauthorized(RuntimeException ex,
                                                                HttpServletRequest request) {
-        log.warn("Unauthorized access: {}", ex.getMessage());
+        log.warn("Authentication failed: {}", ex.getMessage());
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request.getRequestURI());
     }
 
@@ -51,22 +77,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleAccessDenied(AccessDeniedException ex,
                                                                HttpServletRequest request) {
         log.warn("Access denied: {}", ex.getMessage());
-        return buildResponse(HttpStatus.FORBIDDEN, "Access denied", request.getRequestURI());
+        return buildResponse(HttpStatus.FORBIDDEN, "Access denied — insufficient role", request.getRequestURI());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException ex,
-                                                             HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleBeanValidation(MethodArgumentNotValidException ex,
+                                                                 HttpServletRequest request) {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(this::formatFieldError)
                 .collect(Collectors.joining("; "));
-        log.warn("Validation failed: {}", message);
+        log.warn("Request validation failed: {}", message);
         return buildResponse(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        log.error("Unexpected error", ex);
+        log.error("Unexpected error at {}", request.getRequestURI(), ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred",
                 request.getRequestURI());
     }
@@ -76,8 +102,8 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status,
-                                                             String message,
-                                                             String path) {
+                                                           String message,
+                                                           String path) {
         ApiErrorResponse body = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(status.value())

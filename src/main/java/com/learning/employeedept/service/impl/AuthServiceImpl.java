@@ -1,11 +1,13 @@
 package com.learning.employeedept.service.impl;
 
 import com.learning.employeedept.dto.request.LoginRequest;
+import com.learning.employeedept.dto.request.RefreshTokenRequest;
 import com.learning.employeedept.dto.request.RegisterRequest;
 import com.learning.employeedept.dto.response.AuthResponse;
 import com.learning.employeedept.entity.Role;
 import com.learning.employeedept.entity.RoleName;
 import com.learning.employeedept.entity.User;
+import com.learning.employeedept.exception.DuplicateEmailException;
 import com.learning.employeedept.exception.DuplicateResourceException;
 import com.learning.employeedept.exception.UnauthorizedException;
 import com.learning.employeedept.repository.RoleRepository;
@@ -22,6 +24,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Authentication business logic — register, login, token refresh.
+ * <p>
+ * SOLID — <b>Single Responsibility</b>: auth only. Does not manage employees/departments.
+ * <b>Dependency Inversion</b>: implements {@link AuthService} interface.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,22 +49,21 @@ public class AuthServiceImpl implements AuthService {
             throw new DuplicateResourceException("Username already exists");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Email already exists");
+            throw new DuplicateEmailException("Email already exists: " + request.getEmail());
         }
 
-        Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
-                .orElseThrow(() -> new IllegalStateException("Default role ROLE_USER not found"));
+        Role employeeRole = roleRepository.findByName(RoleName.ROLE_EMPLOYEE)
+                .orElseThrow(() -> new IllegalStateException("Default role ROLE_EMPLOYEE not found"));
 
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(userRole)
+                .role(employeeRole)
                 .build();
 
         userRepository.save(user);
-        log.info("Registered new user: {}", user.getUsername());
-
+        log.info("Registered new user: {} with role {}", user.getUsername(), RoleName.ROLE_EMPLOYEE);
         return buildAuthResponse(user.getUsername());
     }
 
@@ -66,6 +73,7 @@ public class AuthServiceImpl implements AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
         } catch (Exception ex) {
+            log.warn("Login failed for username: {}", request.getUsername());
             throw new UnauthorizedException("Invalid username or password");
         }
 
@@ -76,12 +84,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse refresh(RefreshTokenRequest request) {
         String refreshToken = request.getRefreshToken();
+
         if (!jwtService.isRefreshToken(refreshToken)) {
             throw new UnauthorizedException("Invalid refresh token");
         }
 
         String username = jwtService.extractUsername(refreshToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
         if (!jwtService.isRefreshTokenValid(refreshToken, userDetails)) {
             throw new UnauthorizedException("Refresh token expired or invalid");
         }

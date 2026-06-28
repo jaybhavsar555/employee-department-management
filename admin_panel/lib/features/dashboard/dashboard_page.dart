@@ -7,6 +7,7 @@ import '../../services/department_service.dart';
 import '../../services/employee_service.dart';
 import '../../shared/widgets/common_widgets.dart';
 
+/// Home page after login — shows summary stats from the API.
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
@@ -16,14 +17,14 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   List<Department>? _departments;
-  PageResponse<Employee>? _employees;
+  PageResponse<Employee>? _employees; // size=1 — we only need totalElements count
   String? _error;
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _load(); // Fetch data when page opens
   }
 
   Future<void> _load() async {
@@ -33,6 +34,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     });
 
     try {
+      // Two parallel API calls — departments list + employee count
       final departments =
           await ref.read(departmentServiceProvider).getAll();
       final employees = await ref.read(employeeServiceProvider).getAll(size: 1);
@@ -81,10 +83,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Dashboard',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+          Text('Dashboard', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 8),
           Text(
             'Overview of your organization',
@@ -93,6 +92,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 ),
           ),
           const SizedBox(height: 24),
+          // Three stat cards in a row
           Wrap(
             spacing: 16,
             runSpacing: 16,
@@ -118,10 +118,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             ],
           ),
           const SizedBox(height: 32),
-          Text(
-            'Departments',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('Departments', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           if (_departments!.isEmpty)
             const Card(
@@ -156,6 +153,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 }
 
+/// Small card widget showing one number + label
 class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.title,

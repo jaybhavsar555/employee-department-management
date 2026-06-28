@@ -5,11 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../models/auth_session.dart';
 
+/// Layout wrapper for all protected pages (dashboard, departments, employees).
+/// Shows sidebar on desktop, drawer + bottom nav on mobile.
 class AdminShell extends ConsumerWidget {
   const AdminShell({super.key, required this.child});
 
-  final Widget child;
+  final Widget child; // The current page (dashboard, departments, etc.)
 
+  // Navigation menu items — path matches GoRouter routes
   static const _destinations = [
     _NavItem('/dashboard', Icons.dashboard_outlined, 'Dashboard'),
     _NavItem('/departments', Icons.business_outlined, 'Departments'),
@@ -18,19 +21,20 @@ class AdminShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(authStateProvider).valueOrNull;
-    final location = GoRouterState.of(context).uri.path;
+    final session = ref.watch(authStateProvider).valueOrNull; // Logged-in user
+    final location = GoRouterState.of(context).uri.path; // Current URL path
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final useRail = constraints.maxWidth >= 900;
+        final useRail = constraints.maxWidth >= 900; // Desktop layout
 
         if (useRail) {
+          // Wide screen: left NavigationRail + content
           return Scaffold(
             body: Row(
               children: [
                 NavigationRail(
-                  extended: constraints.maxWidth >= 1100,
+                  extended: constraints.maxWidth >= 1100, // Show labels when very wide
                   selectedIndex: _selectedIndex(location),
                   onDestinationSelected: (index) =>
                       context.go(_destinations[index].path),
@@ -53,6 +57,7 @@ class AdminShell extends ConsumerWidget {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: IconButton(
                           tooltip: 'Sign out',
+                          // Logout clears tokens → router redirects to /login
                           onPressed: () => ref.read(authStateProvider.notifier).logout(),
                           icon: const Icon(Icons.logout),
                         ),
@@ -61,12 +66,13 @@ class AdminShell extends ConsumerWidget {
                   ),
                 ),
                 const VerticalDivider(width: 1),
-                Expanded(child: child),
+                Expanded(child: child), // Page content fills remaining space
               ],
             ),
           );
         }
 
+        // Narrow screen: AppBar + Drawer + BottomNavigationBar
         return Scaffold(
           appBar: AppBar(
             title: const Text('EMS Admin'),
@@ -102,7 +108,7 @@ class AdminShell extends ConsumerWidget {
                     title: Text(item.label),
                     selected: location.startsWith(item.path),
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Close drawer
                       context.go(item.path);
                     },
                   ),
@@ -127,6 +133,7 @@ class AdminShell extends ConsumerWidget {
     );
   }
 
+  /// Find which nav item matches current URL
   int _selectedIndex(String location) {
     for (var i = 0; i < _destinations.length; i++) {
       if (location.startsWith(_destinations[i].path)) {
@@ -136,6 +143,7 @@ class AdminShell extends ConsumerWidget {
     return 0;
   }
 
+  /// App title + username + role in sidebar/drawer header
   Widget _buildHeader(BuildContext context, AuthSession? session, {required bool compact}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,10 +159,7 @@ class AdminShell extends ConsumerWidget {
         ),
         if (session != null) ...[
           const SizedBox(height: 4),
-          Text(
-            session.username,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(session.username, style: Theme.of(context).textTheme.bodySmall),
           Text(
             session.isAdmin ? 'Administrator' : 'User',
             style: Theme.of(context).textTheme.labelSmall,

@@ -4,7 +4,7 @@ import com.learning.employeedept.dto.request.EmployeeRequest;
 import com.learning.employeedept.dto.response.EmployeeResponse;
 import com.learning.employeedept.entity.Department;
 import com.learning.employeedept.entity.Employee;
-import com.learning.employeedept.exception.DuplicateResourceException;
+import com.learning.employeedept.exception.DuplicateEmailException;
 import com.learning.employeedept.exception.ResourceNotFoundException;
 import com.learning.employeedept.mapper.EmployeeMapper;
 import com.learning.employeedept.repository.DepartmentRepository;
@@ -17,6 +17,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Employee business logic — email uniqueness, department assignment, pagination.
+ * <p>
+ * SOLID — <b>Single Responsibility</b>: employee domain rules only.
+ * Controllers never touch {@link EmployeeRepository} directly.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -48,6 +54,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional(readOnly = true)
     public Page<EmployeeResponse> getAll(Long departmentId, String search, Pageable pageable) {
+        log.debug("Fetching employees page={} departmentId={} search={}",
+                pageable.getPageNumber(), departmentId, search);
         return employeeRepository.findWithFilters(departmentId, search, pageable)
                 .map(employeeMapper::toResponse);
     }
@@ -88,7 +96,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 : employeeRepository.existsByEmailIgnoreCaseAndIdNot(email, currentEmployeeId);
 
         if (exists) {
-            throw new DuplicateResourceException("Employee email already exists: " + email);
+            throw new DuplicateEmailException("Employee email already exists: " + email);
         }
     }
 }

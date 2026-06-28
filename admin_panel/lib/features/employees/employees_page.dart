@@ -10,6 +10,8 @@ import '../../services/department_service.dart';
 import '../../services/employee_service.dart';
 import '../../shared/widgets/common_widgets.dart';
 
+/// Employee list with pagination, search, department filter, and CRUD.
+/// Maps to GET/POST/PUT/DELETE /employees on the backend.
 class EmployeesPage extends ConsumerStatefulWidget {
   const EmployeesPage({super.key});
 
@@ -18,20 +20,20 @@ class EmployeesPage extends ConsumerStatefulWidget {
 }
 
 class _EmployeesPageState extends ConsumerState<EmployeesPage> {
-  PageResponse<Employee>? _page;
-  List<Department> _departments = [];
+  PageResponse<Employee>? _page; // Paginated result from Spring Boot
+  List<Department> _departments = []; // For filter dropdown and form
   String? _error;
   bool _loading = true;
 
-  int _currentPage = 0;
-  int? _departmentFilter;
+  int _currentPage = 0; // Spring uses 0-based page index
+  int? _departmentFilter; // null = all departments
   final _searchController = TextEditingController();
-  String _searchQuery = '';
+  String _searchQuery = ''; // Sent as ?search= to backend
 
   @override
   void initState() {
     super.initState();
-    _loadDepartments();
+    _loadDepartments(); // Needed for filter + create form
     _load();
   }
 
@@ -47,9 +49,10 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
           await ref.read(departmentServiceProvider).getAll();
       if (!mounted) return;
       setState(() => _departments = departments);
-    } catch (_) {}
+    } catch (_) {} // Silent fail — form will show message if empty
   }
 
+  /// GET /employees with page, search, departmentId query params
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -119,7 +122,7 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
   }
 
   void _applySearch() {
-    _currentPage = 0;
+    _currentPage = 0; // Reset to first page on new search
     _searchQuery = _searchController.text.trim();
     _load();
   }
@@ -135,6 +138,7 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header row with Add button
             Row(
               children: [
                 Text(
@@ -150,6 +154,7 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
               ],
             ),
             const SizedBox(height: 16),
+            // Search + department filter controls
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -202,6 +207,7 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
               ],
             ),
             const SizedBox(height: 16),
+            // Table or loading/error state
             Expanded(
               child: _loading
                   ? const LoadingView()
@@ -273,6 +279,7 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
                                   ),
                                 ),
                               ),
+                              // Pagination controls — Spring returns totalPages
                               if (_page!.totalPages > 1)
                                 Padding(
                                   padding: const EdgeInsets.all(12),
@@ -315,6 +322,7 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
   }
 }
 
+/// Dialog for creating or editing an employee
 class _EmployeeFormDialog extends ConsumerStatefulWidget {
   const _EmployeeFormDialog({
     this.employee,
@@ -369,7 +377,7 @@ class _EmployeeFormDialogState extends ConsumerState<_EmployeeFormDialog> {
       context: context,
       initialDate: _hireDate,
       firstDate: DateTime(1990),
-      lastDate: DateTime.now(),
+      lastDate: DateTime.now(), // Backend validates @PastOrPresent
     );
     if (picked != null) {
       setState(() => _hireDate = picked);
@@ -388,6 +396,7 @@ class _EmployeeFormDialogState extends ConsumerState<_EmployeeFormDialog> {
     }
 
     setState(() => _saving = true);
+    // Build request matching backend EmployeeRequest DTO
     final request = EmployeeRequest(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),

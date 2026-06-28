@@ -14,21 +14,24 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+/**
+ * Parent class for all entities — holds shared primary key and audit columns.
+ */
 @Getter
 @Setter
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
+@MappedSuperclass // Not a table itself; fields are inherited by child @Entity classes
+@EntityListeners(AuditingEntityListener.class) // Enables auto-fill of createdAt / updatedAt
 public abstract class BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id // Marks the primary key field
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // DB auto-increment (PostgreSQL BIGSERIAL)
     private Long id;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @CreatedDate // Set once when row is first inserted (requires @EnableJpaAuditing)
+    @Column(nullable = false, updatable = false) // Never changes after create
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
+    @LastModifiedDate // Updated automatically on every save
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 }

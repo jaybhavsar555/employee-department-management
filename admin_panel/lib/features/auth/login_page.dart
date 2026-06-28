@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/providers/auth_provider.dart';
 
+/// Login screen — only public page (no sidebar).
+/// Calls AuthNotifier.login() which hits POST /auth/login.
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
@@ -12,10 +14,10 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController(text: 'admin');
+  final _formKey = GlobalKey<FormState>(); // Validates fields before submit
+  final _usernameController = TextEditingController(text: 'admin'); // Pre-filled for dev
   final _passwordController = TextEditingController(text: 'admin123');
-  bool _obscurePassword = true;
+  bool _obscurePassword = true; // Toggle show/hide password
 
   @override
   void dispose() {
@@ -25,34 +27,36 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return; // Stop if fields empty
 
+    // Call auth layer — returns error message or null on success
     final error = await ref.read(authStateProvider.notifier).login(
           _usernameController.text.trim(),
           _passwordController.text,
         );
 
-    if (!mounted) return;
+    if (!mounted) return; // Widget removed from tree — don't update UI
     if (error != null) {
+      // Show backend error (e.g. "Invalid username or password")
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error), backgroundColor: Colors.red.shade700),
       );
     } else {
-      context.go('/dashboard');
+      context.go('/dashboard'); // GoRouter navigates to protected page
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
-    final isLoading = authState.isLoading;
+    final isLoading = authState.isLoading; // True while login API call runs
 
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: 420), // Max width on large screens
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -109,13 +113,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                         obscureText: _obscurePassword,
-                        onFieldSubmitted: (_) => _submit(),
+                        onFieldSubmitted: (_) => _submit(), // Enter key submits
                         validator: (value) =>
                             value == null || value.isEmpty ? 'Required' : null,
                       ),
                       const SizedBox(height: 24),
                       FilledButton(
-                        onPressed: isLoading ? null : _submit,
+                        onPressed: isLoading ? null : _submit, // Disable while loading
                         child: isLoading
                             ? const SizedBox(
                                 height: 20,

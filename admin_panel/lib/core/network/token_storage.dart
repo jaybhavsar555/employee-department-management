@@ -2,10 +2,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../constants/storage_keys.dart';
 
-/// Persists JWT credentials using platform secure storage.
-///
-/// On mobile: Keychain / EncryptedSharedPreferences.
-/// On web: encrypted localStorage wrapper (best available for browser apps).
+/// Saves and reads JWT tokens securely on the device.
+/// Interview: "We never store tokens in plain SharedPreferences."
 class TokenStorage {
   TokenStorage(this._storage);
 
@@ -19,6 +17,7 @@ class TokenStorage {
 
   Future<String?> readRole() => _storage.read(key: StorageKeys.role);
 
+  /// Called after login or refresh — saves everything at once
   Future<void> saveSession({
     required String accessToken,
     required String refreshToken,
@@ -33,6 +32,7 @@ class TokenStorage {
     ]);
   }
 
+  /// Called on token refresh — only tokens change, user info stays same
   Future<void> updateTokens({
     required String accessToken,
     required String refreshToken,
@@ -43,6 +43,7 @@ class TokenStorage {
     ]);
   }
 
+  /// Called on logout — removes all saved auth data
   Future<void> clear() async {
     await Future.wait([
       _storage.delete(key: StorageKeys.accessToken),

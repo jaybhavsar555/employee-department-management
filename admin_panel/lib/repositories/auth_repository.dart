@@ -4,24 +4,24 @@ import '../models/auth_response.dart';
 import '../models/auth_session.dart';
 import '../services/auth_api_service.dart';
 
-/// Single entry point for authentication operations used by the UI layer.
-///
-/// Coordinates API calls and secure persistence. Other layers depend on this
-/// class instead of talking to [AuthApiService] or [TokenStorage] directly.
+/// Middle layer between UI and network/storage.
+/// Interview point: UI never calls Dio directly — it goes through Repository.
 class AuthRepository {
   AuthRepository(this._api, this._storage);
 
-  final AuthApiService _api;
-  final TokenStorage _storage;
+  final AuthApiService _api; // HTTP calls to /auth/login and /auth/refresh
+  final TokenStorage _storage; // Secure storage for tokens on device
 
-  String? _cachedAccessToken;
+  String? _cachedAccessToken; // In-memory cache so we don't read storage every request
 
+  /// App startup: load tokens from secure storage and rebuild session.
   Future<AuthSession?> restoreSession() async {
     final accessToken = await _storage.readAccessToken();
     final refreshToken = await _storage.readRefreshToken();
     final username = await _storage.readUsername();
     final role = await _storage.readRole();
 
+    // If any piece is missing, treat as logged out and wipe partial data
     if (accessToken == null ||
         refreshToken == null ||
         username == null ||
@@ -35,6 +35,7 @@ class AuthRepository {
     return AuthSession(username: username, role: role);
   }
 
+  /// Login: call API, save tokens, return session for UI.
   Future<AuthSession> login(String username, String password) async {
     final response = await _api.login(
       LoginRequest(username: username, password: password),
@@ -43,20 +44,21 @@ class AuthRepository {
     return AuthSession(username: response.username, role: response.role);
   }
 
+  /// Logout: clear memory cache and delete all tokens from secure storage.
   Future<void> logout() async {
     _cachedAccessToken = null;
     await _storage.clear();
   }
 
+  /// Used by AuthInterceptor before each API call.
   Future<String?> getAccessToken() async {
     if (_cachedAccessToken != null) return _cachedAccessToken;
     _cachedAccessToken = await _storage.readAccessToken();
     return _cachedAccessToken;
   }
 
-  /// Called by [TokenRefreshInterceptor] when the API returns 401.
-  ///
-  /// Returns the new access token, or `null` if refresh failed (session dead).
+  /// When API returns 401, TokenRefreshInterceptor calls this.
+  /// Returns new access token, or null if refresh failed → user must log in again.
   Future<String?> refreshAccessToken() async {
     final refreshToken = await _storage.readRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
@@ -68,14 +70,15 @@ class AuthRepository {
       final response = await _api.refresh(
         RefreshTokenRequest(refreshToken: refreshToken),
       );
-      await _persistAuthResponse(response);
+      await _persistAuthResponse(response); // Save new token pair
       return response.token;
     } on ApiException {
-      await logout();
+      await logout(); // Refresh token expired or invalid
       return null;
     }
   }
 
+  /// Save both tokens + user info after login or refresh.
   Future<void> _persistAuthResponse(AuthResponse response) async {
     _cachedAccessToken = response.token;
     await _storage.saveSession(

@@ -1,3 +1,6 @@
+# Backend + PostgreSQL only.
+# Run the Flutter frontend locally: cd admin_panel && fvm flutter run -d chrome
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -37,18 +40,18 @@ services:
       retries: 10
       start_period: 40s
 
-  frontend:
-    build:
-      context: ./admin_panel
-      dockerfile: Dockerfile
-      args:
-        API_BASE_URL: /api/v1
-    container_name: ems-frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      backend:
-        condition: service_healthy
+  # frontend:
+  #   build:
+  #     context: ./admin_panel
+  #     dockerfile: Dockerfile
+  #     args:
+  #       API_BASE_URL: /api/v1
+  #   container_name: ems-frontend
+  #   ports:
+  #     - "3000:80"
+  #   depends_on:
+  #     backend:
+  #       condition: service_healthy
 
 volumes:
   ems_postgres_data:

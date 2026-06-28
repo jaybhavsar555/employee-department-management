@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Reusable loading spinner — shown while API calls are in progress
 class LoadingView extends StatelessWidget {
   const LoadingView({super.key, this.message = 'Loading...'});
 
@@ -20,6 +21,7 @@ class LoadingView extends StatelessWidget {
   }
 }
 
+/// Red banner for showing API errors at top of screen
 class ErrorBanner extends StatelessWidget {
   const ErrorBanner({super.key, required this.message, this.onRetry});
 
@@ -39,6 +41,7 @@ class ErrorBanner extends StatelessWidget {
   }
 }
 
+/// Confirmation popup before delete — returns true if user confirms
 Future<bool?> showConfirmDialog(
   BuildContext context, {
   required String title,
@@ -52,11 +55,11 @@ Future<bool?> showConfirmDialog(
       content: Text(message),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context, false),
+          onPressed: () => Navigator.pop(context, false), // Cancel
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () => Navigator.pop(context, true),
+          onPressed: () => Navigator.pop(context, true), // Confirm delete
           child: Text(confirmLabel),
         ),
       ],

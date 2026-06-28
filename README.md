@@ -1,5 +1,6 @@
 # Employee & Department Management System
 
+[![CI](https://github.com/jaybhavsar555/employee-department-management/actions/workflows/ci.yml/badge.svg)](https://github.com/jaybhavsar555/employee-department-management/actions/workflows/ci.yml)
 [![Java](https://img.shields.io/badge/Java-17+-007396?logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -34,7 +35,7 @@ A production-style **Spring Boot REST API** for managing organizational departme
 
 The **Employee & Department Management System (EMS)** is a backend service that lets authenticated users create and manage departments and employees through a secure REST API. Departments act as organizational units; each employee belongs to exactly one department.
 
-The application follows a **clean layered architecture** — controllers handle HTTP, services enforce business rules, repositories manage persistence, and DTOs keep the API contract separate from JPA entities. Security is handled with **stateless JWT authentication** and **role-based authorization** (`ROLE_ADMIN`, `ROLE_USER`).
+The application follows a **clean layered architecture** — controllers handle HTTP, services enforce business rules, repositories manage persistence, and DTOs keep the API contract separate from JPA entities. Security is handled with **stateless JWT authentication** and **role-based authorization** (`ROLE_ADMIN`, `ROLE_EMPLOYEE`).
 
 | Aspect | Detail |
 |--------|--------|
@@ -50,7 +51,8 @@ The application follows a **clean layered architecture** — controllers handle 
 ### Authentication & Authorization
 - User registration and login with JWT token issuance
 - BCrypt password hashing
-- Role-based access: authenticated users can read/write; **DELETE** operations require `ROLE_ADMIN`
+- Role-based access: **ROLE_ADMIN** can DELETE; **ROLE_EMPLOYEE** can read/create/update
+- Refresh token support (`POST /auth/refresh`)
 - Stateless session management (no server-side sessions)
 
 ### Department Management
@@ -73,7 +75,8 @@ The application follows a **clean layered architecture** — controllers handle 
 - Seed data: default roles and admin user on startup
 - Health check endpoint for monitoring
 - OpenAPI 3 / Swagger UI documentation
-- Unit tests with JUnit 5, Mockito, and H2 (test profile)
+- Unit tests with JUnit 5, Mockito, and H2 (test profile) — JaCoCo coverage report
+- GitHub Actions CI — build, test, package on every push
 
 ---
 
@@ -166,10 +169,14 @@ See the full **[Relationships (ER diagram)](#relationships-er-diagram)** in the 
 ```
 employee-department-management/
 ├── docs/
+│   ├── BACKEND_GUIDE.md             # Full backend reference
+│   ├── BACKEND_INTERVIEW_GUIDE.md   # Class-by-class interview prep
+│   ├── FRONTEND_GUIDE.md            # Flutter admin panel guide
 │   ├── ARCHITECTURE.md              # Layer design & rationale
 │   ├── DATABASE_DESIGN.md           # Normalization & relationship guide
 │   ├── schema.sql                   # Reference SQL schema (incl. projects & tasks)
 │   └── screenshots/                 # README screenshots (add your own)
+├── .github/workflows/ci.yml         # GitHub Actions — build, test, package
 ├── src/
 │   ├── main/
 │   │   ├── java/com/learning/employeedept/
@@ -216,7 +223,7 @@ JPA `ddl-auto: update` manages tables automatically in development. The referenc
 
 | Table | Description | Key Constraints |
 |-------|-------------|-----------------|
-| `roles` | User roles (`ROLE_ADMIN`, `ROLE_USER`) | `name` UNIQUE |
+| `roles` | User roles (`ROLE_ADMIN`, `ROLE_EMPLOYEE`) | `name` UNIQUE |
 | `users` | Application users (API login) | `username`, `email` UNIQUE; FK → `roles` |
 | `departments` | Organizational units | `name` UNIQUE |
 | `employees` | Staff HR records | `email` UNIQUE; FK → `departments` |
@@ -498,15 +505,17 @@ The API is available at **http://localhost:8080**.
 3. Click **Authorize** in Swagger and paste the JWT token
 4. Explore department and employee endpoints
 
-### Run Tests
+### Run Tests & Coverage
 
 ```bash
 # Windows
 mvnw.cmd test
 
-# Linux / macOS
-./mvnw test
+# View coverage report
+# Open target/site/jacoco/index.html
 ```
+
+Service layer tests: `DepartmentServiceTest`, `EmployeeServiceTest`, `AuthServiceTest` (JUnit 5 + Mockito, AAA pattern).
 
 ### Environment Variables
 
@@ -554,6 +563,19 @@ docker run -p 8080:8080 \
 | Service | Image | Port | Purpose |
 |---------|-------|------|---------|
 | `postgres` | `postgres:16-alpine` | `5432` | Primary database with health check & persistent volume |
+| `backend` | Multi-stage Dockerfile | `8080` | Spring Boot API (waits for healthy postgres) |
+
+### GitHub Actions CI
+
+On every push to `main`/`master`/`develop`:
+
+1. **Checkout** — clone repository
+2. **Setup JDK 21** — install Java with Maven cache
+3. **Verify** — compile, run tests, JaCoCo coverage
+4. **Package** — build runnable JAR
+5. **Upload artifact** — store JAR for 7 days
+
+Workflow file: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
 ---
 
@@ -610,7 +632,7 @@ Working through this project teaches practical backend skills commonly tested in
 
 | Area | Enhancement |
 |------|-------------|
-| **Refresh tokens** | Long-lived sessions with token rotation |
+| **Refresh tokens** | Long-lived sessions with token rotation ✅ |
 | **Audit logging** | Track who created/updated/deleted each record |
 | **Soft delete** | Mark records inactive instead of hard deletion |
 | **Flyway / Liquibase** | Version-controlled database migrations |
@@ -618,7 +640,7 @@ Working through this project teaches practical backend skills commonly tested in
 | **Rate limiting** | Protect auth endpoints from brute-force attacks |
 | **Email notifications** | Welcome emails on registration, alerts on changes |
 | **Frontend UI** | React or Angular admin dashboard |
-| **CI/CD pipeline** | GitHub Actions for build, test, and Docker publish |
+| **CI/CD pipeline** | GitHub Actions for build, test, and Docker publish ✅ |
 | **Kubernetes deployment** | Helm charts for cloud-native scaling |
 | **Observability** | Spring Actuator metrics, structured logging, tracing |
 | **Multi-tenancy** | Support multiple organizations in one deployment |
