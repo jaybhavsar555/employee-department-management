@@ -23,7 +23,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         seedRole(RoleName.ROLE_ADMIN);
-        seedRole(RoleName.ROLE_USER);
+        seedRole(RoleName.ROLE_EMPLOYEE);
         seedAdminUser();
     }
 

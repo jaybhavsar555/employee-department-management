@@ -55,7 +55,7 @@ public class SecurityConfig {
                         .permitAll()
                         // Health check — public so Docker/monitoring can ping it
                         .requestMatchers(HttpMethod.GET, "/api/v1/health").permitAll()
-                        // Only ADMIN role can DELETE resources
+                        // Only ADMIN role can DELETE resources (EMPLOYEE can read/create/update)
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/**").hasRole("ADMIN")
                         // All other API calls need a valid JWT
                         .anyRequest().authenticated()
